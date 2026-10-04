@@ -1,0 +1,451 @@
+{
+  "metadata": {
+    "account_id": "123456789012",
+    "collected_at": "2026-10-04T00:00:00+00:00",
+    "schema_version": "1.0",
+    "note": "SAMPLE DATA - fictitious account"
+  },
+  "identities": [
+    {
+      "id": "arn:aws:iam::123456789012:user/alice.smith",
+      "arn": "arn:aws:iam::123456789012:user/alice.smith",
+      "name": "alice.smith",
+      "type": "user",
+      "path": "/",
+      "created": "2025-01-15T09:30:00+00:00",
+      "last_used": "2026-09-30T08:12:00+00:00",
+      "tags": {
+        "Type": "human",
+        "Team": "Security"
+      },
+      "has_console_access": true,
+      "mfa_enabled": true,
+      "access_keys": [],
+      "groups": [
+        "Admins"
+      ],
+      "attached_policies": [
+        {
+          "name": "AdministratorAccess",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          },
+          "arn": "arn:aws:iam::aws:policy/AdministratorAccess"
+        }
+      ],
+      "inline_policies": [],
+      "group_policies": [],
+      "trust_policy": null,
+      "classification": {
+        "category": "human",
+        "confidence": 1.0,
+        "human_score": 10,
+        "non_human_score": 0,
+        "signals": [
+          "human:tag type=human",
+          "human:firstname.lastname-style name",
+          "human:console password enabled",
+          "human:MFA device attached"
+        ],
+        "needs_review": false
+      }
+    },
+    {
+      "id": "arn:aws:iam::123456789012:user/bob.jones",
+      "arn": "arn:aws:iam::123456789012:user/bob.jones",
+      "name": "bob.jones",
+      "type": "user",
+      "path": "/",
+      "created": "2025-01-15T09:30:00+00:00",
+      "last_used": "2026-09-30T08:12:00+00:00",
+      "tags": {},
+      "has_console_access": true,
+      "mfa_enabled": false,
+      "access_keys": [],
+      "groups": [],
+      "attached_policies": [
+        {
+          "name": "S3ReadOnlyCustom",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "s3:GetObject",
+                  "s3:ListBucket"
+                ],
+                "Resource": [
+                  "arn:aws:s3:::prod-customer-data",
+                  "arn:aws:s3:::prod-customer-data/*"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "inline_policies": [],
+      "group_policies": [],
+      "trust_policy": null,
+      "classification": {
+        "category": "human",
+        "confidence": 1.0,
+        "human_score": 4,
+        "non_human_score": 0,
+        "signals": [
+          "human:firstname.lastname-style name",
+          "human:console password enabled"
+        ],
+        "needs_review": false
+      }
+    },
+    {
+      "id": "arn:aws:iam::123456789012:user/svc-backup",
+      "arn": "arn:aws:iam::123456789012:user/svc-backup",
+      "name": "svc-backup",
+      "type": "user",
+      "path": "/",
+      "created": "2025-01-15T09:30:00+00:00",
+      "last_used": "2026-09-30T08:12:00+00:00",
+      "tags": {
+        "Type": "service"
+      },
+      "has_console_access": false,
+      "mfa_enabled": false,
+      "access_keys": [
+        {
+          "id": "AKIAEXAMPLESVC-0",
+          "status": "Active",
+          "created": "2025-02-01T00:00:00+00:00"
+        },
+        {
+          "id": "AKIAEXAMPLESVC-1",
+          "status": "Active",
+          "created": "2025-02-01T00:00:00+00:00"
+        }
+      ],
+      "groups": [],
+      "attached_policies": [
+        {
+          "name": "S3FullAccess",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:*",
+                "Resource": "*"
+              }
+            ]
+          },
+          "arn": "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        }
+      ],
+      "inline_policies": [],
+      "group_policies": [],
+      "trust_policy": null,
+      "classification": {
+        "category": "non_human",
+        "confidence": 1.0,
+        "human_score": 0,
+        "non_human_score": 7,
+        "signals": [
+          "non_human:tag type=service",
+          "non_human:service-style name",
+          "non_human:access keys but no console login"
+        ],
+        "needs_review": false
+      }
+    },
+    {
+      "id": "arn:aws:iam::123456789012:user/legacy-user-01",
+      "arn": "arn:aws:iam::123456789012:user/legacy-user-01",
+      "name": "legacy-user-01",
+      "type": "user",
+      "path": "/",
+      "created": "2025-01-15T09:30:00+00:00",
+      "last_used": "2026-09-30T08:12:00+00:00",
+      "tags": {},
+      "has_console_access": false,
+      "mfa_enabled": false,
+      "access_keys": [
+        {
+          "id": "AKIAEXAMPLELEGA0",
+          "status": "Active",
+          "created": "2025-02-01T00:00:00+00:00"
+        }
+      ],
+      "groups": [],
+      "attached_policies": [],
+      "inline_policies": [],
+      "group_policies": [],
+      "trust_policy": null,
+      "classification": {
+        "category": "uncertain",
+        "confidence": 1.0,
+        "human_score": 0,
+        "non_human_score": 1,
+        "signals": [
+          "non_human:access keys but no console login"
+        ],
+        "needs_review": true
+      }
+    },
+    {
+      "id": "arn:aws:iam::123456789012:role/lambda-etl-role",
+      "arn": "arn:aws:iam::123456789012:role/lambda-etl-role",
+      "name": "lambda-etl-role",
+      "type": "role",
+      "path": "/",
+      "created": "2025-03-10T10:00:00+00:00",
+      "last_used": "2026-09-29T14:00:00+00:00",
+      "tags": {},
+      "max_session_duration": 3600,
+      "attached_policies": [
+        {
+          "name": "S3ReadOnlyCustom",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "s3:GetObject",
+                  "s3:ListBucket"
+                ],
+                "Resource": [
+                  "arn:aws:s3:::prod-customer-data",
+                  "arn:aws:s3:::prod-customer-data/*"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "inline_policies": [],
+      "group_policies": [],
+      "trust_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "lambda.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+          }
+        ]
+      },
+      "classification": {
+        "category": "non_human",
+        "confidence": 1.0,
+        "human_score": 0,
+        "non_human_score": 6,
+        "signals": [
+          "non_human:service-style name",
+          "non_human:trusted by AWS service principal"
+        ],
+        "needs_review": false
+      }
+    },
+    {
+      "id": "arn:aws:iam::123456789012:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_PowerUser_abc123",
+      "arn": "arn:aws:iam::123456789012:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_PowerUser_abc123",
+      "name": "AWSReservedSSO_PowerUser_abc123",
+      "type": "role",
+      "path": "/aws-reserved/sso.amazonaws.com/",
+      "created": "2025-03-10T10:00:00+00:00",
+      "last_used": "2026-09-29T14:00:00+00:00",
+      "tags": {},
+      "max_session_duration": 3600,
+      "attached_policies": [
+        {
+          "name": "AdministratorAccess",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          },
+          "arn": "arn:aws:iam::aws:policy/AdministratorAccess"
+        }
+      ],
+      "inline_policies": [],
+      "group_policies": [],
+      "trust_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "Federated": "arn:aws:iam::123456789012:saml-provider/AWSSSO_example_DO_NOT_DELETE"
+            },
+            "Action": "sts:AssumeRole"
+          }
+        ]
+      },
+      "classification": {
+        "category": "human",
+        "confidence": 1.0,
+        "human_score": 7,
+        "non_human_score": 0,
+        "signals": [
+          "human:assumed via SAML/SSO federation",
+          "human:AWS IAM Identity Center (SSO) role"
+        ],
+        "needs_review": false
+      }
+    },
+    {
+      "id": "arn:aws:iam::123456789012:role/CrossAccountAccess",
+      "arn": "arn:aws:iam::123456789012:role/CrossAccountAccess",
+      "name": "CrossAccountAccess",
+      "type": "role",
+      "path": "/",
+      "created": "2025-03-10T10:00:00+00:00",
+      "last_used": "2026-09-29T14:00:00+00:00",
+      "tags": {},
+      "max_session_duration": 3600,
+      "attached_policies": [
+        {
+          "name": "S3FullAccess",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:*",
+                "Resource": "*"
+              }
+            ]
+          },
+          "arn": "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        }
+      ],
+      "inline_policies": [],
+      "group_policies": [],
+      "trust_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "arn:aws:iam::999999999999:root"
+            },
+            "Action": "sts:AssumeRole"
+          }
+        ]
+      },
+      "classification": {
+        "category": "uncertain",
+        "confidence": 0.0,
+        "human_score": 0,
+        "non_human_score": 0,
+        "signals": [
+          "neutral:assumable by AWS principals (could be human or workload)"
+        ],
+        "needs_review": true
+      }
+    },
+    {
+      "id": "arn:aws:iam::123456789012:role/OpenTrustRole",
+      "arn": "arn:aws:iam::123456789012:role/OpenTrustRole",
+      "name": "OpenTrustRole",
+      "type": "role",
+      "path": "/",
+      "created": "2025-03-10T10:00:00+00:00",
+      "last_used": "2026-09-29T14:00:00+00:00",
+      "tags": {},
+      "max_session_duration": 3600,
+      "attached_policies": [],
+      "inline_policies": [
+        {
+          "name": "Inline-S3",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:*",
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "group_policies": [],
+      "trust_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "*"
+            },
+            "Action": "sts:AssumeRole"
+          }
+        ]
+      },
+      "classification": {
+        "category": "uncertain",
+        "confidence": 0.0,
+        "human_score": 0,
+        "non_human_score": 0,
+        "signals": [
+          "neutral:assumable by AWS principals (could be human or workload)"
+        ],
+        "needs_review": true
+      }
+    }
+  ],
+  "resources": [
+    {
+      "id": "arn:aws:s3:::prod-customer-data",
+      "arn": "arn:aws:s3:::prod-customer-data",
+      "name": "prod-customer-data",
+      "type": "s3_bucket",
+      "created": "2024-11-01T00:00:00+00:00",
+      "bucket_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::prod-customer-data/*"
+          }
+        ]
+      },
+      "public_access_block": null,
+      "tags": {
+        "Classification": "confidential"
+      }
+    },
+    {
+      "id": "arn:aws:s3:::internal-logs",
+      "arn": "arn:aws:s3:::internal-logs",
+      "name": "internal-logs",
+      "type": "s3_bucket",
+      "created": "2024-12-01T00:00:00+00:00",
+      "bucket_policy": null,
+      "public_access_block": {
+        "BlockPublicAcls": true,
+        "IgnorePublicAcls": true,
+        "BlockPublicPolicy": true,
+        "RestrictPublicBuckets": true
+      },
+      "tags": {}
+    }
+  ]
+}

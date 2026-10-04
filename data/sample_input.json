@@ -1,0 +1,125 @@
+{
+  "account_id": "123456789012",
+  "sensitive_resources": [
+    "prod-customer-data",
+    "arn:aws:s3:::finance-*"
+  ],
+  "identities": [
+    {
+      "name": "AdminRole",
+      "type": "role",
+      "arn": "arn:aws:iam::123456789012:role/AdminRole",
+      "classification": "non-human",
+      "trust_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sts:AssumeRole"
+          }
+        ]
+      },
+      "attached_policies": [
+        {
+          "name": "FullAdmin",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "inline_policies": []
+    },
+    {
+      "name": "ReportsReader",
+      "type": "role",
+      "arn": "arn:aws:iam::123456789012:role/ReportsReader",
+      "classification": "non-human",
+      "trust_policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "lambda.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+          }
+        ]
+      },
+      "attached_policies": [
+        {
+          "name": "ReadReports",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "s3:GetObject",
+                  "s3:ListBucket"
+                ],
+                "Resource": [
+                  "arn:aws:s3:::reports-bucket",
+                  "arn:aws:s3:::reports-bucket/*"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "inline_policies": []
+    },
+    {
+      "name": "devops-alice",
+      "type": "user",
+      "arn": "arn:aws:iam::123456789012:user/devops-alice",
+      "classification": "human",
+      "attached_policies": [],
+      "inline_policies": [
+        {
+          "name": "LaunchStuff",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "iam:PassRole",
+                  "ec2:RunInstances"
+                ],
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "group_policies": [
+        {
+          "group": "Finance",
+          "name": "FinanceWrite",
+          "document": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "s3:PutObject",
+                  "s3:GetObject"
+                ],
+                "Resource": "arn:aws:s3:::finance-eu/*"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
