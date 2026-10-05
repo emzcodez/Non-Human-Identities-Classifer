@@ -4,12 +4,29 @@ import json
 import pandas as pd
 import streamlit as st
 
-from main import SEVERITIES, STATUSES, run_analysis, summarize
+from main import (SEVERITIES, STATUSES, finding_severity, identity_type,
+                  run_analysis, summarize)
 
 st.set_page_config(page_title="AWS Identity Risk Analyzer", page_icon="🛡️", layout="wide")
 
 SEV_ICON = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}
 STATUS_ICON = {"allowed": "✅", "blocked": "⛔", "inconclusive": "⚠️"}
+IDENTITY_TYPES = ["human", "non-human", "uncertain"]
+
+
+def _policies(identity):
+    """Flatten the collector's three policy buckets into one displayable list."""
+    out = []
+    for key, label in (("attached_policies", "attached"), ("inline_policies", "inline"),
+                       ("group_policies", "group")):
+        for pol in identity.get(key) or []:
+            out.append({"name": pol.get("name", "?"), "type": label, "document": pol.get("document") or {}})
+    return out
+
+
+def _res(value):
+    """Verification results carry the whole bucket dict; show its ARN."""
+    return value.get("arn", "?") if isinstance(value, dict) else value
 
 
 # ---------------------------------------------------------------- data loading
@@ -78,13 +95,14 @@ with tabs[1]:
     else:
         c1, c2 = st.columns([2, 1])
         q = c1.text_input("🔎 Search by name or ARN")
-        t = c2.multiselect("Type", ["human", "non-human"], default=["human", "non-human"])
+        t = c2.multiselect("Type", IDENTITY_TYPES, default=IDENTITY_TYPES)
         rows = []
         for i in identities:
-            rows.append({"Name": i.get("name", "?"), "Kind": i.get("kind", "?"), "Type": i.get("type", "unknown"),
-                         "Why": i.get("classification_reason", ""),
-                         "Policies": ", ".join(p.get("name", "?") for p in i.get("policies", [])) or "—",
-                         "MFA": i.get("mfa_enabled", "n/a") if i.get("kind") == "user" else "n/a",
+            kind = i.get("type", "?")
+            rows.append({"Name": i.get("name", "?"), "Kind": kind, "Type": identity_type(i),
+                         "Why": "; ".join((i.get("classification") or {}).get("signals", [])),
+                         "Policies": ", ".join(p["name"] for p in _policies(i)) or "—",
+                         "MFA": ("yes" if i.get("mfa_enabled") else "no") if kind == "user" else "—",
                          "ARN": i.get("arn", "")})
         df = pd.DataFrame(rows)
         df = df[df["Type"].isin(t)]
@@ -97,9 +115,9 @@ with tabs[1]:
             ident = next(i for i in identities if i.get("name") == pick)
             a, b = st.columns(2)
             a.markdown("**Policies**")
-            for p in ident.get("policies", []):
-                with a.expander(f"{p.get('name')} ({p.get('type')})"):
-                    st.json(p.get("document", {}))
+            for p in _policies(ident):
+                with a.expander(f"{p['name']} ({p['type']})"):
+                    st.json(p["document"])
             b.markdown("**Trust policy**")
             b.json(ident.get("trust_policy") or {"info": "N/A (IAM user)"})
 
@@ -111,24 +129,30 @@ with tabs[2]:
         c1, c2 = st.columns([2, 1])
         q = c1.text_input("🔎 Search findings")
         sevs = c2.multiselect("Severity", SEVERITIES, default=SEVERITIES)
-        flt = [f for f in findings if f.get("severity") in sevs and
-               (not q or q.lower() in json.dumps(f).lower())]
-        st.dataframe(pd.DataFrame([{"ID": f.get("id"), "Severity": f"{SEV_ICON.get(f.get('severity'), '')} {f.get('severity')}",
-                                    "Identity": f.get("identity"), "Title": f.get("title"),
+        def _label(x):
+            return f"{x.get('rule')} - {x.get('policy')} ({x.get('identity')})"
+
+        flt = [f for f in findings if finding_severity(f) in sevs and
+               (not q or q.lower() in json.dumps(f, default=str).lower())]
+        st.dataframe(pd.DataFrame([{"Rule": f.get("rule"),
+                                    "Severity": f"{SEV_ICON.get(finding_severity(f), '')} {finding_severity(f)}",
+                                    "Identity": f.get("identity"), "Policy": f.get("policy"),
                                     "Resource": f.get("resource")} for f in flt]),
                      use_container_width=True, hide_index=True)
         if flt:
-            sel = st.selectbox("Select a finding for details", [f"{f.get('id')} - {f.get('title')} ({f.get('identity')})" for f in flt])
-            f = flt[[f"{x.get('id')} - {x.get('title')} ({x.get('identity')})" for x in flt].index(sel)]
-            st.markdown(f"### {SEV_ICON.get(f.get('severity'), '')} {f.get('title')}")
-            st.write(f"**Severity:** {f.get('severity')}  \n**Identity:** {f.get('identity')}  \n"
-                     f"**Identity ARN:** `{f.get('identity_arn') or 'n/a'}`  \n**Resource:** `{f.get('resource')}`")
-            st.write(f"**Reason:** {f.get('reason')}")
-            st.info(f"**Remediation:** {f.get('remediation')}")
+            sel = st.selectbox("Select a finding for details", [_label(x) for x in flt])
+            f = flt[[_label(x) for x in flt].index(sel)]
+            sev = finding_severity(f)
             ident = next((i for i in identities if i.get("name") == f.get("identity")), None)
+            st.markdown(f"### {SEV_ICON.get(sev, '')} {f.get('rule')}")
+            st.write(f"**Severity:** {sev}  \n**Identity:** {f.get('identity')}  \n"
+                     f"**Identity ARN:** `{(ident or {}).get('arn') or 'n/a'}`  \n**Resource:** `{f.get('resource')}`")
+            st.write(f"**Reason:** {f.get('reason')}")
+            if f.get("remediation"):
+                st.info(f"**Remediation:** {f['remediation']}")
             if ident:
                 with st.expander("Identity policies (raw)"):
-                    st.json({"policies": ident.get("policies"), "trust_policy": ident.get("trust_policy")})
+                    st.json({"policies": _policies(ident), "trust_policy": ident.get("trust_policy")})
 
 # ---------------------------------------------------------------- verification
 with tabs[3]:
@@ -140,12 +164,12 @@ with tabs[3]:
         shown = [v for v in verifs if v.get("status", "inconclusive") in sel]
         st.dataframe(pd.DataFrame([{"Status": f"{STATUS_ICON.get(v.get('status'), '⚠️')} {v.get('status')}",
                                     "Principal": v.get("principal"), "Role": v.get("role"),
-                                    "Resource": v.get("resource"), "Action": v.get("action", "n/a")}
+                                    "Resource": _res(v.get("resource")), "Action": v.get("action", "n/a")}
                                    for v in shown]), use_container_width=True, hide_index=True)
         st.subheader("Evidence")
         for v in shown[:50]:
             icon = STATUS_ICON.get(v.get("status"), "⚠️")
-            with st.expander(f"{icon} {v.get('principal')} → {v.get('role')} → {v.get('resource')} [{v.get('action', 'n/a')}]"):
+            with st.expander(f"{icon} {v.get('principal')} → {v.get('role')} → {_res(v.get('resource'))} [{v.get('action', 'n/a')}]"):
                 for e in v.get("evidence", []) or ["No evidence supplied by verifier."]:
                     st.write(f"- {e}")
 
@@ -156,11 +180,13 @@ with tabs[4]:
     else:
         groups = {}
         for f in findings:
-            groups.setdefault((f.get("title"), f.get("severity"), f.get("remediation")), []).append(f.get("identity"))
+            groups.setdefault((f.get("policy"), finding_severity(f), f.get("remediation")), []).append(f.get("identity"))
         order = {s: n for n, s in enumerate(SEVERITIES)}
-        for (title, sev, fix), who in sorted(groups.items(), key=lambda kv: order.get(kv[0][1], 9)):
+        for title, sev, fix in sorted(groups, key=lambda g: (order.get(g[1], 9), str(g[0]))):
+            who = groups[(title, sev, fix)]
             with st.expander(f"{SEV_ICON.get(sev, '')} {sev.upper()} - {title}  ({len(who)} affected)"):
-                st.write(f"**Fix:** {fix}")
+                if fix:
+                    st.write(f"**Fix:** {fix}")
                 st.write("**Affected:** " + ", ".join(sorted(set(map(str, who)))))
         csv = pd.DataFrame(findings).to_csv(index=False)
         st.download_button("⬇ Download findings (CSV)", csv, file_name="findings.csv", mime="text/csv")

@@ -25,9 +25,11 @@ def load_sample():
 def select_paths(data):
     """Yield (role, principal, bucket, action): every trusted principal x S3 bucket."""
     n = 0
-    buckets = [r for r in data.get("resources", []) if r.get("type") == "s3"]
+    buckets = [r for r in data.get("resources", []) if r.get("type") in ("s3_bucket", "s3")]
     for ident in data.get("identities", []):
-        if ident.get("kind", "role") != "role":
+        # `type` is the AWS entity kind; this filter decides which identities reach the verifier,
+        # so an unrecognised kind is skipped silently here.
+        if ident.get("type") != "role":
             continue
         principals = []
         for st in (ident.get("trust_policy") or {}).get("Statement", []):
@@ -97,10 +99,22 @@ def run_analysis(use_sample=False, profile=None, use_simulator=False):
             "source": source, "warnings": warnings}
 
 
+def finding_severity(finding):
+    """detect_risks() emits `risk` as Critical/High/Medium/Low; normalise to the lowercase buckets."""
+    return str(finding.get("risk") or finding.get("severity") or "low").strip().lower()
+
+
+def identity_type(identity):
+    """classify_identities() puts human/non_human/uncertain in classification.category;
+    `type` is the AWS entity kind (user/role), not the classification."""
+    category = (identity.get("classification") or {}).get("category")
+    return {"non_human": "non-human"}.get(category, category or "unknown")
+
+
 def summarize(results):
     ids = results.get("identities", [])
-    types = Counter(i.get("type", "unknown") for i in ids)
-    sev = Counter(f.get("severity", "low") for f in results.get("findings", []))
+    types = Counter(identity_type(i) for i in ids)
+    sev = Counter(finding_severity(f) for f in results.get("findings", []))
     ver = Counter(v.get("status", "inconclusive") for v in results.get("verifications", []))
     return {"total_identities": len(ids), "human": types.get("human", 0),
             "non_human": types.get("non-human", 0),
