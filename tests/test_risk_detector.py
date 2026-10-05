@@ -8,7 +8,9 @@ from analyzer.policy_parser import (
 )
 from analyzer.risk_detector import detect_risks
 
-FIXTURES = pathlib.Path(__file__).parent / "fixtures"
+TESTS = pathlib.Path(__file__).resolve().parent
+REPO = TESTS.parent
+FIXTURES = TESTS / "fixtures"
 ACCOUNT = "123456789012"
 REQUIRED_KEYS = {"identity", "risk", "reason", "resource", "rule", "policy", "evidence"}
 VALID_SEVERITIES = {"Critical", "High", "Medium", "Low"}
@@ -268,7 +270,7 @@ def test_invalid_input_raises():
 
 
 def test_output_format_is_consistent_and_json_serialisable():
-    sample = json.loads((FIXTURES.parent.parent / "data" / "sample_input.json").read_text())
+    sample = json.loads((REPO / "data" / "sample_input.json").read_text())
     findings = detect_risks(sample)
     assert findings
     for f in findings:
@@ -279,7 +281,7 @@ def test_output_format_is_consistent_and_json_serialisable():
 
 
 def test_findings_are_sorted_most_severe_first():
-    sample = json.loads((FIXTURES.parent.parent / "data" / "sample_input.json").read_text())
+    sample = json.loads((REPO / "data" / "sample_input.json").read_text())
     order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}
     ranks = [order[f["risk"]] for f in detect_risks(sample)]
     assert ranks == sorted(ranks)
